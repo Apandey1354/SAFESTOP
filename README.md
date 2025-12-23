@@ -1,25 +1,21 @@
-# LegalGuard - Complete Workflow Documentation
+# Safestop - Complete Workflow Documentation
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
-2. [Architecture Overview](#architecture-overview)
-3. [Frontend Workflow](#frontend-workflow)
-4. [Backend Workflow](#backend-workflow)
-5. [Database Workflow](#database-workflow)
-6. [Data Flow Diagrams](#data-flow-diagrams)
+2. [Complete User Journey](#complete-user-journey)
+3. [Step-by-Step Workflow](#step-by-step-workflow)
+4. [Architecture Overview](#architecture-overview)
+5. [Backend Workflow](#backend-workflow)
+6. [Database Workflow](#database-workflow)
 7. [API Endpoints Reference](#api-endpoints-reference)
 8. [State Management](#state-management)
-9. [Authentication Flow](#authentication-flow)
-10. [Emergency Consultation Flow](#emergency-consultation-flow)
-11. [Payment Processing Flow](#payment-processing-flow)
-12. [Session Management Flow](#session-management-flow)
-13. [Integration Points](#integration-points)
+9. [Integration Points](#integration-points)
 
 ---
 
 ## Project Overview
 
-**LegalGuard** is a React Native mobile application that connects users with legal professionals during emergency situations. The application provides on-demand legal consultation services through a streamlined mobile interface.
+**Safestop** is a React Native mobile application that connects users with legal professionals during emergency situations. The application provides on-demand legal consultation services through a streamlined mobile interface.
 
 ### Technology Stack
 
@@ -67,7 +63,7 @@
                              │ HTTP/REST API
                              │
 ┌────────────────────────────▼────────────────────────────────┐
-│                    FastAPI Backend                           │
+│                    FastAPI Backend (Safestop)                 │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
 │  │   Routers    │  │   Models     │  │   Database   │     │
 │  │  (Endpoints) │  │  (Schemas)   │  │  (Supabase)  │     │
@@ -111,19 +107,544 @@
 
 ---
 
-## Frontend Workflow
+## Complete User Journey
 
-### Application Initialization
+This section follows the user's journey from the moment they open the app to completing an emergency consultation.
+
+### High-Level Flow
 
 ```
-App.tsx
+App Launch
   │
-  ├─> GestureHandlerRootView (Gesture support)
+  ├─> Splash Screen (2.5 seconds)
   │
-  ├─> StatusBar (System status bar)
+  ├─> Welcome Screen
   │
-  └─> AppNavigator (Main navigation container)
+  ├─> Phone Authentication
+  │
+  ├─> Registration
+  │
+  ├─> Onboarding
+  │
+  ├─> Permissions
+  │
+  ├─> Main App (Tabs)
+  │     │
+  │     ├─> Emergency Selection
+  │     │     │
+  │     │     └─> Emergency Consultation Flow
+  │     │           │
+  │     │           ├─> Emergency Detail
+  │     │           ├─> Payment
+  │     │           ├─> Lawyer Matching
+  │     │           ├─> Lawyer Profile
+  │     │           ├─> Call
+  │     │           └─> Post-Call Summary
+  │     │
+  │     ├─> History (View past cases)
+  │     │
+  │     └─> Profile (Settings & Account)
 ```
+
+---
+
+## Step-by-Step Workflow
+
+### Step 1: App Launch & Splash Screen
+
+**What Happens:**
+1. User opens the Safestop app
+2. App initializes (`App.tsx` loads)
+3. Splash Screen displays with animated logo
+4. App checks authentication state (currently mocked)
+5. After 2.5 seconds, automatically navigates to next screen
+
+**Technical Details:**
+- **Screen**: `SplashScreen.tsx`
+- **Duration**: 2.5 seconds (auto-advance)
+- **State**: No state changes
+- **Navigation**: → Welcome Screen (or MainTabs if returning user)
+
+**Backend/Database**: No API calls at this stage
+
+---
+
+### Step 2: Welcome Screen
+
+**What Happens:**
+1. User sees welcome screen with authentication options
+2. User can choose:
+   - Phone authentication (primary)
+   - Apple Sign-In (future)
+   - Google Sign-In (future)
+3. User taps "Continue with Phone"
+
+**Technical Details:**
+- **Screen**: `WelcomeScreen.tsx`
+- **User Action**: Select authentication method
+- **State**: No state changes yet
+- **Navigation**: → PhoneAuth Screen
+
+**Backend/Database**: No API calls at this stage
+
+---
+
+### Step 3: Phone Authentication
+
+**What Happens:**
+1. User enters phone number
+2. User taps "Send Code"
+3. OTP code is sent (currently mocked - no real SMS)
+4. User enters 6-digit OTP code
+5. Code is verified (currently mocked - always succeeds)
+6. User is authenticated
+
+**Technical Details:**
+- **Screen**: `PhoneAuthScreen.tsx`
+- **User Input**: Phone number, OTP code
+- **State**: No state changes (authentication mocked)
+- **Navigation**: → Registration Screen
+
+**Backend/Database**: 
+- ⚠️ Currently mocked
+- Future: Will call Supabase Auth API for OTP
+
+---
+
+### Step 4: Registration
+
+**What Happens:**
+1. User enters personal information:
+   - Full Name (required)
+   - State (required)
+2. User taps "Continue"
+3. User data is saved to app state
+4. Profile is created (currently only in frontend state)
+
+**Technical Details:**
+- **Screen**: `RegistrationScreen.tsx`
+- **User Input**: Full name, state
+- **State Update**: 
+  ```typescript
+  setUser({
+    id: '1',
+    name: enteredName,
+    phone: '+1 (555) 000-0000', // From phone auth
+    state: enteredState,
+    emergencyContacts: [],
+    savedCards: []
+  })
+  ```
+- **Navigation**: → Onboarding Screen
+
+**Backend/Database**: 
+- ⚠️ Currently mocked (simulated API call)
+- Future: Will call `POST /api/profile/upsert` to save profile
+
+**Data Flow:**
+```
+User Input → Zustand Store (setUser) → [Future: Backend API] → Database
+```
+
+---
+
+### Step 5: Onboarding
+
+**What Happens:**
+1. User sees 4 informational slides about the app:
+   - Slide 1: App introduction
+   - Slide 2: How it works
+   - Slide 3: Features
+   - Slide 4: Get started
+2. User can swipe through slides or tap "Skip"
+3. User taps "Get Started" or "Skip"
+4. Onboarding completion is recorded
+
+**Technical Details:**
+- **Screen**: `OnboardingScreen.tsx`
+- **User Action**: Swipe slides or skip
+- **State Update**: 
+  ```typescript
+  completeOnboarding() // Sets hasCompletedOnboarding: true
+  ```
+- **Navigation**: → Permissions Screen
+
+**Backend/Database**: No API calls
+
+---
+
+### Step 6: Permissions
+
+**What Happens:**
+1. App requests device permissions:
+   - **Location** (Required) - To share with attorney during emergency
+   - **Microphone** (Required) - For voice calls
+   - **Notifications** (Optional) - For updates
+2. User grants or denies permissions
+3. User taps "Continue"
+4. Permissions status is saved
+
+**Technical Details:**
+- **Screen**: `PermissionsScreen.tsx`
+- **User Action**: Grant/deny permissions
+- **State Update**: 
+  ```typescript
+  grantPermissions() // Sets hasGrantedPermissions: true
+  ```
+- **Navigation**: → MainTabs (main app)
+
+**Backend/Database**: No API calls
+
+---
+
+### Step 7: Main App - Emergency Selection Tab
+
+**What Happens:**
+1. User lands on the Emergency Selection screen (default tab)
+2. User sees 4 emergency type options:
+   - 🚔 **Traffic Pullover** - Pulled over by police
+   - 🍺 **DUI / Sobriety Test** - DUI checkpoint or sobriety test
+   - 👮 **Arrest / Detainment** - Being arrested or detained
+   - ⚠️ **Other** - Other legal emergency
+3. User taps on an emergency type
+
+**Technical Details:**
+- **Screen**: `EmergencySelectionScreen.tsx` (Tab 1)
+- **User Action**: Select emergency type
+- **State**: No state changes
+- **Navigation**: → Emergency Detail Screen
+
+**Backend/Database**: No API calls
+
+---
+
+### Step 8: Emergency Detail Screen
+
+**What Happens:**
+1. User sees detailed information about their selected emergency type
+2. Content includes:
+   - Legal tips specific to the emergency
+   - User rights information
+   - What to do/not do
+3. User taps "Get Help Now" button
+
+**Technical Details:**
+- **Screen**: `EmergencyDetailScreen.tsx`
+- **User Action**: Tap "Get Help Now"
+- **State**: No state changes
+- **Navigation**: → Payment Screen
+
+**Backend/Database**: No API calls
+
+---
+
+### Step 9: Payment Screen
+
+**What Happens:**
+1. User sees payment screen with:
+   - Service: Emergency Legal Consultation
+   - Amount: $49.99
+   - Payment method options
+2. User selects payment method:
+   - **Google Pay** (quick option)
+   - **Credit/Debit Card** (requires card details)
+3. If card selected:
+   - User enters card number
+   - User enters cardholder name
+   - User enters expiry date
+   - User enters CVV
+   - User can choose to save card for future
+4. User taps "Pay $49.99"
+5. Payment is processed (currently mocked - always succeeds)
+6. Receipt is created and saved
+7. If "Save Card" was checked, card is saved to user profile
+
+**Technical Details:**
+- **Screen**: `PaymentScreen.tsx`
+- **User Input**: Payment method, card details (if applicable)
+- **State Updates**: 
+  ```typescript
+  // Create receipt
+  addReceipt({
+    id: timestamp,
+    date: new Date(),
+    caseId: timestamp,
+    amount: 49.99,
+    serviceName: 'Emergency Legal Consultation',
+    duration: 30,
+    lawyerName: 'TBD',
+    paymentMethod: selectedMethod,
+    transactionId: `TXN${timestamp}`,
+    items: [...]
+  })
+  
+  // Save card if selected
+  if (saveCard) {
+    savePaymentCard({
+      id: timestamp,
+      cardNumber: last4Digits,
+      cardHolderName: name,
+      expiryDate: expiry,
+      cardType: 'visa',
+      isDefault: isFirstCard
+    })
+  }
+  ```
+- **Navigation**: → Lawyer Matching Screen
+
+**Backend/Database**: 
+- ⚠️ Payment processing mocked
+- Future: Will integrate Stripe for real payments
+
+---
+
+### Step 10: Lawyer Matching Screen
+
+**What Happens:**
+1. User sees animated matching screen
+2. Display shows:
+   - Pulsing animation
+   - "Finding the right attorney..." message
+   - ETA countdown (e.g., "Connecting in 5... 4... 3...")
+   - Status updates
+3. After ~6 seconds, lawyer is matched
+4. Current case is created in app state
+
+**Technical Details:**
+- **Screen**: `LawyerMatchingScreen.tsx`
+- **Duration**: ~6 seconds (simulated)
+- **State Update**: 
+  ```typescript
+  setCurrentCase({
+    id: timestamp,
+    type: emergencyType,
+    timestamp: new Date(),
+    lawyer: matchedLawyer, // From mockLawyers array
+    duration: 0, // Will be updated during call
+    cost: 49.99
+  })
+  ```
+- **Navigation**: → Lawyer Profile Screen (auto-advance)
+
+**Backend/Database**: 
+- ⚠️ Lawyer matching mocked (uses `mockLawyers` array)
+- Future: Will call backend API to match with real lawyers
+
+---
+
+### Step 11: Lawyer Profile Screen
+
+**What Happens:**
+1. User sees matched lawyer's profile:
+   - Name and photo
+   - Years of experience
+   - Rating (e.g., ⭐ 4.9)
+   - Specialties (e.g., "Traffic Law", "DUI Defense")
+   - State bar information
+2. User reviews lawyer information
+3. User taps "Start Call" button
+
+**Technical Details:**
+- **Screen**: `LawyerProfileScreen.tsx`
+- **User Action**: Tap "Start Call"
+- **State**: No state changes (lawyer already in currentCase)
+- **Navigation**: → Call Screen
+
+**Backend/Database**: No API calls
+
+---
+
+### Step 12: Call Screen
+
+**What Happens:**
+1. Call interface appears
+2. Display shows:
+   - "LIVE CALL" status badge
+   - "🔒 Encrypted" badge
+   - Lawyer's photo and name
+   - Call duration timer (starts counting)
+3. User can interact with call controls:
+   - **Mute/Unmute** - Toggle microphone
+   - **Speaker** - Toggle speakerphone
+   - **Location Sharing** - Share location with attorney
+   - **End Call** - Large red button to end call
+4. User ends call by tapping "End Call"
+5. Call duration is recorded
+6. Current case is updated with duration
+
+**Technical Details:**
+- **Screen**: `CallScreen.tsx`
+- **User Actions**: Mute, speaker, location, end call
+- **State Updates**: 
+  ```typescript
+  // Duration updates every second during call
+  currentCase.duration = elapsedSeconds
+  
+  // On call end
+  const emergencyCase = {
+    ...currentCase,
+    duration: finalDuration,
+    cost: 49.99
+  }
+  ```
+- **Navigation**: → Post Call Summary Screen (no back button)
+
+**Backend/Database**: 
+- ⚠️ Call functionality mocked (no real calling)
+- Future: Will integrate Twilio Voice SDK for real calls
+
+---
+
+### Step 13: Post-Call Summary Screen
+
+**What Happens:**
+1. User sees call summary:
+   - Call duration (e.g., "15 minutes")
+   - Total cost ($49.99)
+   - Lawyer information
+   - Service details
+2. Options available:
+   - Download call recording (future feature)
+   - View receipt
+   - Follow-up actions
+3. Case is saved to history
+4. User taps "Done" or back button
+5. Returns to Emergency Selection screen
+
+**Technical Details:**
+- **Screen**: `PostCallSummaryScreen.tsx`
+- **User Action**: Review summary, tap "Done"
+- **State Updates**: 
+  ```typescript
+  // Add case to history
+  addCase(emergencyCase)
+  
+  // Clear current case
+  setCurrentCase(null)
+  ```
+- **Navigation**: → Back to Emergency Selection Tab
+
+**Backend/Database**: 
+- ⚠️ Session creation mocked
+- Future: Will call `POST /api/sessions` to save session to database
+
+**Data Flow:**
+```
+Call End → Add to cases array → [Future: POST /api/sessions] → Database
+```
+
+---
+
+### Step 14: History Tab
+
+**What Happens:**
+1. User navigates to History tab (bottom navigation)
+2. User sees list of all past consultation cases
+3. Each case shows:
+   - Emergency type
+   - Date and time
+   - Lawyer name
+   - Duration
+   - Cost
+4. User can tap on a case to view details
+5. Tapping a case shows Post-Call Summary for that case
+
+**Technical Details:**
+- **Screen**: `HistoryScreen.tsx` (Tab 2)
+- **Data Source**: Zustand store `cases` array
+- **User Action**: Tap case to view details
+- **Navigation**: → Post Call Summary Screen (for selected case)
+
+**Backend/Database**: 
+- ⚠️ Currently shows only in-memory cases
+- Future: Will call `GET /api/sessions/by-profile/{profile_id}` to load from database
+
+---
+
+### Step 15: Profile Tab
+
+**What Happens:**
+1. User navigates to Profile tab (bottom navigation)
+2. User sees settings sections:
+   - **Account Settings**
+     - Personal Information
+     - Phone Number
+     - State
+   - **Emergency Settings**
+     - Emergency Contacts
+     - Location Sharing preferences
+     - Notifications
+   - **Payment Settings**
+     - Payment Methods (tap to manage)
+     - Billing History (tap to view)
+   - **Legal Settings**
+     - Terms of Service
+     - Privacy Policy
+     - Support
+     - Sign Out
+3. User can tap on any setting to view/edit
+
+**Technical Details:**
+- **Screen**: `ProfileScreen.tsx` (Tab 3)
+- **User Actions**: Navigate to sub-screens
+- **Navigation**: 
+  - → Payment Methods Screen
+  - → Billing History Screen
+
+**Backend/Database**: No API calls (settings are local)
+
+---
+
+### Step 16: Payment Methods Screen
+
+**What Happens:**
+1. User sees list of saved payment cards
+2. Each card shows:
+   - Card type (Visa, Mastercard, etc.)
+   - Last 4 digits
+   - Cardholder name
+   - Expiry date
+   - Default indicator
+3. User can:
+   - Add new card
+   - Remove card
+   - Set default card
+
+**Technical Details:**
+- **Screen**: `PaymentMethodsScreen.tsx`
+- **Data Source**: `user.savedCards` from Zustand store
+- **State Updates**: 
+  ```typescript
+  savePaymentCard(card) // Add card
+  removePaymentCard(cardId) // Remove card
+  ```
+
+**Backend/Database**: No API calls (cards stored locally)
+
+---
+
+### Step 17: Billing History Screen
+
+**What Happens:**
+1. User sees list of all payment receipts
+2. Each receipt shows:
+   - Date
+   - Service name
+   - Amount
+   - Payment method
+   - Transaction ID
+3. User can tap receipt to view details
+
+**Technical Details:**
+- **Screen**: `BillingHistoryScreen.tsx`
+- **Data Source**: Zustand store `billingHistory` array
+- **User Action**: View receipt details
+
+**Backend/Database**: No API calls (receipts stored locally)
+
+---
+
+## Screen Flow Details (Reference)
 
 ### Navigation Structure
 
@@ -174,146 +695,17 @@ Splash Screen
               └─> Billing History Screen
 ```
 
-### Screen Flow Details
+### Application Initialization
 
-#### 1. Splash Screen
-- **Purpose**: Initial app loading and branding
-- **Duration**: 2.5 seconds (auto-advance)
-- **Actions**: 
-  - Display animated logo
-  - Initialize app state
-  - Navigate to Welcome or MainTabs based on auth state
-
-#### 2. Welcome Screen
-- **Purpose**: Authentication entry point
-- **Options**: 
-  - Phone authentication
-  - Apple Sign-In (future)
-  - Google Sign-In (future)
-- **Navigation**: → PhoneAuth Screen
-
-#### 3. PhoneAuth Screen
-- **Purpose**: Phone number verification
-- **Flow**:
-  1. User enters phone number
-  2. OTP sent (currently mocked)
-  3. User enters OTP
-  4. Verification (currently mocked)
-- **Navigation**: → Registration Screen
-
-#### 4. Registration Screen
-- **Purpose**: Collect user profile information
-- **Data Collected**:
-  - Full Name
-  - State
-- **State Update**: Sets user object in Zustand store
-- **Navigation**: → Onboarding Screen
-
-#### 5. Onboarding Screen
-- **Purpose**: Educate users about app features
-- **Content**: 4 swipeable slides
-- **Options**: Skip button available
-- **State Update**: Sets `hasCompletedOnboarding: true`
-- **Navigation**: → Permissions Screen
-
-#### 6. Permissions Screen
-- **Purpose**: Request device permissions
-- **Permissions**:
-  - Location (Required)
-  - Microphone (Required)
-  - Notifications (Optional)
-- **State Update**: Sets `hasGrantedPermissions: true`
-- **Navigation**: → MainTabs
-
-#### 7. Emergency Selection Screen (Tab)
-- **Purpose**: Main emergency type selection
-- **Emergency Types**:
-  - 🚔 Traffic Pullover
-  - 🍺 DUI / Sobriety Test
-  - 👮 Arrest / Detainment
-  - ⚠️ Other
-- **Navigation**: → Emergency Detail Screen
-
-#### 8. Emergency Detail Screen
-- **Purpose**: Show legal information and initiate consultation
-- **Content**:
-  - Legal tips
-  - User rights information
-  - Call-to-action button
-- **Navigation**: → Payment Screen
-
-#### 9. Payment Screen
-- **Purpose**: Process payment for consultation
-- **Payment Methods**:
-  - Google Pay
-  - Credit/Debit Card
-- **Amount**: $49.99
-- **Actions**:
-  - Process payment (currently mocked)
-  - Save payment card (if selected)
-  - Create receipt
-  - Update billing history
-- **Navigation**: → Lawyer Matching Screen
-
-#### 10. Lawyer Matching Screen
-- **Purpose**: Match user with available lawyer
-- **Features**:
-  - Animated matching indicator
-  - ETA countdown
-  - Status updates
-- **Duration**: ~6 seconds (simulated)
-- **State Update**: Creates current case
-- **Navigation**: → Lawyer Profile Screen
-
-#### 11. Lawyer Profile Screen
-- **Purpose**: Display matched lawyer information
-- **Information**:
-  - Name and photo
-  - Experience years
-  - Rating
-  - Specialties
-  - State bar information
-- **Navigation**: → Call Screen
-
-#### 12. Call Screen
-- **Purpose**: Active call interface
-- **Features**:
-  - Call duration timer
-  - Mute/unmute toggle
-  - Speaker toggle
-  - Location sharing toggle
-  - End call button
-- **Restrictions**: No back navigation (gesture disabled)
-- **State Update**: Updates current case with duration
-- **Navigation**: → Post Call Summary Screen
-
-#### 13. Post Call Summary Screen
-- **Purpose**: Display call summary and next steps
-- **Information**:
-  - Call duration
-  - Total cost
-  - Lawyer information
-  - Recording download (future)
-  - Follow-up options
-- **State Update**: Adds case to cases array
-- **Navigation**: → Back to Emergency Selection
-
-#### 14. History Screen (Tab)
-- **Purpose**: Display past consultation cases
-- **Data Source**: Zustand store `cases` array
-- **Features**:
-  - List of past cases
-  - Case details on tap
-- **Navigation**: → Post Call Summary Screen (for selected case)
-
-#### 15. Profile Screen (Tab)
-- **Purpose**: User settings and account management
-- **Sections**:
-  - Account Settings (Personal info, phone, state)
-  - Emergency Settings (Contacts, location, notifications)
-  - Payment Settings (Payment methods, billing history)
-  - Legal Settings (Terms, privacy, support)
-- **Navigation**: → Payment Methods Screen, Billing History Screen
+```
+App.tsx
+  │
+  ├─> GestureHandlerRootView (Gesture support)
+  │
+  ├─> StatusBar (System status bar)
+  │
+  └─> AppNavigator (Main navigation container)
+```
 
 ### Frontend State Management (Zustand)
 
@@ -1076,288 +1468,6 @@ profiles (1) ──────< (many) sessions
 
 ---
 
-## Authentication Flow
-
-### Current Implementation
-
-**Status**: ⚠️ Partially implemented (mocked)
-
-**Flow:**
-```
-Welcome Screen
-  │
-  ├─> Phone Authentication
-  │     │
-  │     ├─> Enter Phone Number
-  │     │
-  │     ├─> Send OTP (Mocked)
-  │     │
-  │     ├─> Enter OTP
-  │     │
-  │     └─> Verify OTP (Mocked)
-  │
-  └─> Registration Screen
-        │
-        └─> Set User in Store
-```
-
-### Future Implementation
-
-**Planned Features:**
-1. **Supabase Auth Integration**
-   - Phone OTP via Supabase
-   - Email/password authentication
-   - Social login (Google, Apple)
-
-2. **Session Management**
-   - JWT tokens
-   - Refresh tokens
-   - Token expiration handling
-
-3. **Backend Authentication**
-   - Protected endpoints
-   - User context in requests
-   - Role-based access control
-
----
-
-## Emergency Consultation Flow
-
-### Complete Flow Diagram
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    EMERGENCY CONSULTATION                    │
-└─────────────────────────────────────────────────────────────┘
-
-1. Emergency Selection
-   │
-   ├─> User selects emergency type
-   │     - Traffic Pullover
-   │     - DUI / Sobriety
-   │     - Arrest
-   │     - Other
-   │
-   ▼
-
-2. Emergency Detail
-   │
-   ├─> Display legal information
-   ├─> Show user rights
-   └─> "Get Help Now" button
-   │
-   ▼
-
-3. Payment Screen
-   │
-   ├─> Select payment method
-   │     - Google Pay
-   │     - Credit Card
-   ├─> Enter card details (if card)
-   ├─> Process payment (Mocked)
-   ├─> Save card (optional)
-   └─> Create receipt
-   │
-   ▼
-
-4. Lawyer Matching
-   │
-   ├─> Show matching animation
-   ├─> Display ETA countdown
-   ├─> Match lawyer (Mocked)
-   └─> Create currentCase
-   │
-   ▼
-
-5. Lawyer Profile
-   │
-   ├─> Display lawyer information
-   │     - Name, photo
-   │     - Experience, rating
-   │     - Specialties
-   └─> "Start Call" button
-   │
-   ▼
-
-6. Call Screen
-   │
-   ├─> Initialize call (Mocked)
-   ├─> Start duration timer
-   ├─> Call controls
-   │     - Mute/unmute
-   │     - Speaker toggle
-   │     - Location sharing
-   │     - End call
-   └─> Update currentCase duration
-   │
-   ▼
-
-7. Post-Call Summary
-   │
-   ├─> Display call summary
-   │     - Duration
-   │     - Cost
-   │     - Lawyer info
-   ├─> Add case to history
-   ├─> Create session in backend (Future)
-   └─> Follow-up options
-   │
-   ▼
-
-8. Return to Emergency Selection
-```
-
-### Data Flow in Emergency Flow
-
-1. **Emergency Selection** → No data change
-2. **Emergency Detail** → No data change
-3. **Payment** → `addReceipt()` → `billingHistory` updated
-4. **Matching** → `setCurrentCase()` → `currentCase` created
-5. **Call** → `currentCase.duration` updated
-6. **Summary** → `addCase()` → Case added to `cases` array
-
----
-
-## Payment Processing Flow
-
-### Current Implementation
-
-**Status**: ⚠️ Mocked (no real payment processing)
-
-**Flow:**
-```
-Payment Screen
-  │
-  ├─> User selects payment method
-  │     - Google Pay
-  │     - Credit Card
-  │
-  ├─> If Credit Card:
-  │     - Enter card number
-  │     - Enter cardholder name
-  │     - Enter expiry date
-  │     - Enter CVV
-  │     - Option to save card
-  │
-  ├─> Process Payment
-  │     - Simulate 2-second delay
-  │     - Always succeeds (mocked)
-  │
-  ├─> Create Receipt
-  │     - Generate transaction ID
-  │     - Set amount ($49.99)
-  │     - Set service details
-  │
-  ├─> Save Card (if selected)
-  │     - Add to user.savedCards
-  │
-  └─> Navigate to Matching
-```
-
-### Receipt Structure
-
-```typescript
-interface Receipt {
-  id: string;                    // Generated timestamp
-  date: Date;                    // Current date
-  caseId: string;                // Associated case ID
-  amount: number;                // $49.99
-  serviceName: string;            // "Emergency Legal Consultation"
-  duration: number;              // 30 minutes
-  lawyerName: string;            // "TBD" initially
-  paymentMethod: string;         // "Google Pay" or "Card ending in XXXX"
-  transactionId: string;         // "TXN{timestamp}"
-  items: ReceiptItem[];          // Line items
-}
-```
-
-### Future Implementation
-
-**Planned Features:**
-1. **Stripe Integration**
-   - Real payment processing
-   - Payment method tokens
-   - Payment verification
-
-2. **Backend Payment Endpoint**
-   - Secure payment processing
-   - Webhook handling
-   - Payment status tracking
-
-3. **Payment History Sync**
-   - Store receipts in database
-   - Sync with backend
-   - Retrieve payment history
-
----
-
-## Session Management Flow
-
-### Session Lifecycle
-
-```
-Session Creation
-  │
-  ├─> User completes call
-  │
-  ├─> Frontend collects data:
-  │     - profile_id
-  │     - emergency_type
-  │     - amount_cents
-  │     - matched_attorney_name
-  │     - matched_attorney_id
-  │     - duration
-  │     - notes
-  │
-  ├─> POST /api/sessions
-  │     - Validate request
-  │     - Insert into database
-  │     - Return session data
-  │
-  └─> Session stored in database
-```
-
-### Session Data Structure
-
-**Database Schema:**
-- `id`: UUID (auto-generated)
-- `profile_id`: UUID (foreign key)
-- `emergency_type`: TEXT (optional)
-- `amount_cents`: INTEGER (default: 0)
-- `currency`: TEXT (default: 'usd')
-- `matched_attorney_name`: TEXT (optional)
-- `matched_attorney_id`: TEXT (optional)
-- `matched_at`: TIMESTAMPTZ (optional)
-- `notes`: TEXT (optional)
-- `status`: TEXT (default: 'created')
-- `created_at`: TIMESTAMPTZ (auto-generated)
-- `updated_at`: TIMESTAMPTZ (auto-updated)
-
-**Status Values:**
-- `created`: Session created
-- `matched`: Lawyer matched
-- `in_progress`: Call active
-- `completed`: Call finished
-- `cancelled`: Session cancelled
-
-### Session Retrieval
-
-**Get User History:**
-```
-GET /api/sessions/by-profile/{profile_id}
-  │
-  ├─> Query sessions table
-  │     - Filter by profile_id
-  │     - Order by created_at DESC
-  │
-  └─> Return array of sessions
-```
-
-**Use Cases:**
-- History screen display
-- Billing history
-- Case management
-- Analytics
 
 ---
 
@@ -1706,8 +1816,9 @@ GET /api/sessions/by-profile/{profile_id}
 
 ## Conclusion
 
-This documentation provides a comprehensive overview of the LegalGuard application workflow, covering:
+This documentation provides a comprehensive overview of the Safestop application workflow, covering:
 
+- **Complete User Journey**: Step-by-step flow from app launch to completing an emergency consultation
 - **Frontend**: React Native app structure, navigation, screens, and state management
 - **Backend**: FastAPI server, endpoints, and request processing
 - **Database**: PostgreSQL schema, relationships, and operations
